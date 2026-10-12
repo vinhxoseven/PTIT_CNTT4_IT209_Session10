@@ -1,0 +1,31 @@
+# ==========================================
+# STAGE 1: Builder Stage
+# ==========================================
+FROM maven:3.9-eclipse-temurin-17-alpine AS builder
+
+WORKDIR /app
+
+# Copy file cấu hình dependency trước để tận dụng Docker Layer Cache
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# Copy phần mã nguồn còn lại
+COPY src ./src
+
+# Thực hiện build artifact
+RUN mvn clean package -DskipTests
+
+# ==========================================
+# STAGE 2: Runtime Stage
+# ==========================================
+FROM eclipse-temurin:17-jre-alpine
+
+WORKDIR /app
+
+# Chỉ trích xuất tệp .jar đã biên dịch từ Stage 1 sang Runtime Image siêu nhẹ
+COPY --from=builder /app/target/backend-app-0.0.1-SNAPSHOT.jar app.jar
+
+EXPOSE 8080
+
+# Chạy ứng dụng trên môi trường JRE tối giản
+ENTRYPOINT ["java", "-jar", "app.jar"]

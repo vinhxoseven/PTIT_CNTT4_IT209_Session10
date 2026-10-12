@@ -1,0 +1,15 @@
+# Sử dụng base image Maven đầy đủ để build và chạy ứng dụng
+FROM maven:3.9-eclipse-temurin-17-alpine
+
+WORKDIR /app
+
+# Copy toàn bộ mã nguồn và cấu hình
+COPY . .
+
+# Build ứng dụng (bỏ qua test để tăng tốc độ build)
+RUN mvn clean package -DskipTests
+
+EXPOSE 8080
+
+# Chạy ứng dụng trực tiếp từ image nặng
+ENTRYPOINT ["java", "-jar", "target/backend-app-0.0.1-SNAPSHOT.jar"]
